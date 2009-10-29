@@ -126,13 +126,19 @@ class SASLInitiatingInitializer(xmlstream.BaseFeatureInitiatingInitializer):
         password = self.xmlstream.authenticator.password
 
         mechanisms = get_mechanisms(self.xmlstream)
-        if 'DIGEST-MD5' in mechanisms:
-            self.mechanism = sasl_mechanisms.DigestMD5('xmpp', jid.host, None,
-                                                       jid.user, password)
-        elif 'PLAIN' in mechanisms:
-            self.mechanism = sasl_mechanisms.Plain(None, jid.user, password)
+        if jid.user is not None:
+            if 'DIGEST-MD5' in mechanisms:
+                self.mechanism = sasl_mechanisms.DigestMD5('xmpp', jid.host, None,
+                                                           jid.user, password)
+            elif 'PLAIN' in mechanisms:
+                self.mechanism = sasl_mechanisms.Plain(None, jid.user, password)
+            else:
+                raise SASLNoAcceptableMechanism()
         else:
-            raise SASLNoAcceptableMechanism()
+            if 'ANONYMOUS' in mechanisms:
+                self.mechanism = sasl_mechanisms.Anonymous()
+            else:
+                raise sasl.SASLNoAccetableMechanisms()
 
     def start(self):
         """

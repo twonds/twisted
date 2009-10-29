@@ -17,6 +17,15 @@ class PlainTest(unittest.TestCase):
         m = sasl_mechanisms.Plain(None, 'test', 'secret')
         self.assertEquals(m.getInitialResponse(), '\x00test\x00secret')
 
+
+class AnonymousTest(unittest.TestCase):
+    def test_getInitialResponse(self):
+        """
+        Test the initial response.
+        """
+        m = sasl_mechanisms.Anonymous()
+        self.assertEquals(m.getInitialResponse(), None)
+
 class DigestMD5Test(unittest.TestCase):
     def setUp(self):
         self.mechanism = sasl_mechanisms.DigestMD5('xmpp', 'example.org', None,

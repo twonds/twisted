@@ -37,6 +37,17 @@ class ISASLMechanism(Interface):
 
 
 
+class Anonymous(object):
+    """Implements the ANONYMOUS SASL authentication mechanism.
+
+    This mechanism is defined in RFC 2245.
+    """
+    implements(ISASLMechanism)
+    name = 'ANONYMOUS'
+    
+    def getInitialResponse(self):
+        return None
+
 class Plain(object):
     """
     Implements the PLAIN SASL authentication mechanism.
