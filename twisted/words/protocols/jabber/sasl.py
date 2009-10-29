@@ -138,7 +138,7 @@ class SASLInitiatingInitializer(xmlstream.BaseFeatureInitiatingInitializer):
             if 'ANONYMOUS' in mechanisms:
                 self.mechanism = sasl_mechanisms.Anonymous()
             else:
-                raise sasl.SASLNoAccetableMechanisms()
+                raise SASLNoAcceptableMechanism()
 
     def start(self):
         """

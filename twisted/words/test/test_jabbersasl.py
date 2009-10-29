@@ -4,7 +4,7 @@
 from zope.interface import implements
 from twisted.internet import defer
 from twisted.trial import unittest
-from twisted.words.protocols.jabber import sasl, sasl_mechanisms, xmlstream
+from twisted.words.protocols.jabber import sasl, sasl_mechanisms, xmlstream, jid
 from twisted.words.xish import domish
 
 NS_XMPP_SASL = 'urn:ietf:params:xml:ns:xmpp-sasl'
@@ -169,3 +169,103 @@ class SASLInitiatingInitializerTest(unittest.TestCase):
         self.init.onChallenge(challenge)
         self.assertFailure(d, sasl.SASLIncorrectEncodingError)
         return d
+
+
+class SASLInitiatingInitializerFeaturesTest(unittest.TestCase):
+    """
+    Testing mechanism features for L{twisted.words.protocols.jabber.sasl.SASLInitiatingInitializer}.
+    """
+
+    def setUp(self):
+        self.output = []
+
+        self.authenticator = xmlstream.Authenticator()
+        self.xmlstream = xmlstream.XmlStream(self.authenticator)
+        self.xmlstream.send = self.output.append
+        self.xmlstream.connectionMade()
+        self.xmlstream.dataReceived("<stream:stream xmlns='jabber:client' "
+                        "xmlns:stream='http://etherx.jabber.org/streams' "
+                        "from='example.com' id='12345' version='1.0'>")
+
+        self.init = sasl.SASLInitiatingInitializer(self.xmlstream)
+
+
+    def _setMechanism(self, name):
+        
+        feature = domish.Element((NS_XMPP_SASL,
+                                  'mechanisms'))
+        feature.addElement('mechanism', content=name)
+        self.xmlstream.features[(feature.uri, feature.name)] = feature
+
+        self.init.setMechanism()
+        return self.init.mechanism.name
+        
+    def testSettingAnonymousMechanism(self):
+        """
+        Test setting ANONYMOUS as the authentication mechanism.
+        """
+        self.authenticator.jid = jid.JID('example.com')
+        self.authenticator.password = None
+        name = "ANONYMOUS"
+        
+        self.failUnless(self._setMechanism(name)==name)
+        
+
+    def testSettingPlainMechanism(self):
+        """
+        Test setting PLAIN as the authentication mechanism.
+        """
+        self.authenticator.jid = jid.JID('test@example.com')
+        self.authenticator.password = 'secret'
+        name = "PLAIN"
+
+        self.failUnless(self._setMechanism(name)==name)
+
+
+    def testSettingDigestMD5Mechanism(self):
+        """
+        Test setting DIGEST-MD5 as the authentication mechanism.
+        
+        """
+        self.authenticator.jid = jid.JID('test@example.com')
+        self.authenticator.password = 'secret'
+        name = "DIGEST-MD5"
+
+        self.failUnless(self._setMechanism(name)==name)
+        
+
+    def testSettingInvalidMechanism(self):
+        """
+        Test using a bad SASL authentication mechanism.
+        """
+
+        self.authenticator.jid = jid.JID('test@example.com')
+        self.authenticator.password = 'secret'
+
+        feature = domish.Element((NS_XMPP_SASL,
+                                  'mechanisms'))
+        feature.addElement('mechanism', content="BAD")
+        self.xmlstream.features[(feature.uri, feature.name)] = feature
+        try:
+            self.init.setMechanism()
+            failed = False
+        except sasl.SASLNoAcceptableMechanism:
+            failed = True
+
+        self.failUnless(failed)
+
+        ## also test anonymous fail        
+        self.authenticator.jid = jid.JID('example.com')
+        self.authenticator.password = 'secret'
+
+        feature = domish.Element((NS_XMPP_SASL,
+                                  'mechanisms'))
+        feature.addElement('mechanism', content="BAD")
+        self.xmlstream.features[(feature.uri, feature.name)] = feature
+        try:
+            self.init.setMechanism()
+            failed = False
+        except sasl.SASLNoAcceptableMechanism:
+            failed = True
+
+        self.failUnless(failed)

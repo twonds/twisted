@@ -38,7 +38,8 @@ class ISASLMechanism(Interface):
 
 
 class Anonymous(object):
-    """Implements the ANONYMOUS SASL authentication mechanism.
+    """
+    Implements the ANONYMOUS SASL authentication mechanism.
 
     This mechanism is defined in RFC 2245.
     """

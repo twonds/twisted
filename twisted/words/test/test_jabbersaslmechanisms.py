@@ -19,6 +19,9 @@ class PlainTest(unittest.TestCase):
 
 
 class AnonymousTest(unittest.TestCase):
+    """
+    Tests for L{twisted.words.protocols.jabber.sasl_mechanisms.Anonymous}.
+    """
     def test_getInitialResponse(self):
         """
         Test the initial response.
